@@ -1,12 +1,31 @@
+# ************************************************************************************************************************* #
+#   UTC Header                                                                                                              #
+#                                                         ::::::::::::::::::::       :::    ::: :::::::::::  ::::::::       #
+#      utils_meteorological.py                            ::::::::::::::::::::       :+:    :+:     :+:     :+:    :+:      #
+#                                                         ::::::::::::::+++#####+++  +:+    +:+     +:+     +:+             #
+#      By: branlyst and ismailkad < >                     ::+++##############+++     +:+    +:+     +:+     +:+             #
+#                                                     +++##############+++::::       +#+    +:+     +#+     +#+             #
+#                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
+#                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
+#                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
+#      Update: 2022/04/14 15:36:31 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#                                                                                                                           #
+# ************************************************************************************************************************* #
+
 import pandas as pd
-import numpy as np
 
 def replace_from_dic(string, dic):
+  """
+    Replaces in a string the keys of a dictionnary by their value
+  """
   for key in dic.keys():
     string = string.replace(key, str(dic[key]))
   return string
 
 def index_to_reference(dt):
+  """
+    Generates a dictionnay with {DAY}, {MONTH} and {YEAR} as keys from a datetime variable
+  """
   return {
       '{DAY}': dt.day,
       '{MONTH}': dt.month,
@@ -14,9 +33,15 @@ def index_to_reference(dt):
   }
 
 def reference_to_string(reference):
+  """
+    Generates an unique string index from a dictionnary reference (with {DAY}, {MONTH} and {YEAR} as keys)
+  """
   return f"{reference['{DAY}']}-{reference['{MONTH}']}-{reference['{YEAR}']}"
 
 def load_day_meteorological_data(meteorological_data, day_url):
+  """
+    Loads meteorological data for one day and add it to the meteorological_data dataframe given. Sets datetime as index. 
+  """
   data = pd.read_csv(day_url)
   data['Date/Heure (UTC)'] = pd.to_datetime(data['Date/Heure (UTC)'], format='%Y-%m-%d %H:%M')
   data = data.set_index('Date/Heure (UTC)')
@@ -24,6 +49,9 @@ def load_day_meteorological_data(meteorological_data, day_url):
   return meteorological_data
 
 def load_meteorological_data(indexes, csv_meteo_for_one_day, stations_id):
+  """
+     Loads meteorological data for all indexes. Creates an unique dateframe containing meteorological data for all days (indexes). 
+  """
   meteorological_data = pd.DataFrame()
   already_loaded = []
 
@@ -38,6 +66,9 @@ def load_meteorological_data(indexes, csv_meteo_for_one_day, stations_id):
   return meteorological_data
 
 def remove_unused_columns(data):
+  """
+    Removes unused columns from meteorological data.
+  """
   unused_columns = ['Temps', 'Année', 'Mois', 'Jour', 'Heure (UTC)', 'ID climatologique', 'Nom de la Station', 'Longitude (x)', 'Latitude (y)']
   for unused_column in unused_columns:
     data.drop(unused_column, axis=1, inplace=True)
@@ -45,7 +76,9 @@ def remove_unused_columns(data):
   return data
 
 def convert_columns_to_float_type(data):
-  # change , to . in order to change the data type and have columns as float
+  """
+    Changes , to . in order to change the data type and have columns as float
+  """
   float_columns = ['Temp (°C)', 'Point de rosée (°C)', 'Pression à la station (kPa)', 'Visibilité (km)']
   for float_column in float_columns:
     data[float_column] = data[float_column].str.replace(",", ".")

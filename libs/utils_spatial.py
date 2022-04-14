@@ -1,7 +1,26 @@
+# ************************************************************************************************************************* #
+#   UTC Header                                                                                                              #
+#                                                         ::::::::::::::::::::       :::    ::: :::::::::::  ::::::::       #
+#      utils_spatial.py                                   ::::::::::::::::::::       :+:    :+:     :+:     :+:    :+:      #
+#                                                         ::::::::::::::+++#####+++  +:+    +:+     +:+     +:+             #
+#      By: branlyst and ismailkad < >                     ::+++##############+++     +:+    +:+     +:+     +:+             #
+#                                                     +++##############+++::::       +#+    +:+     +#+     +#+             #
+#                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
+#                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
+#                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
+#      Update: 2022/04/14 15:41:02 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#                                                                                                                           #
+# ************************************************************************************************************************* #
+
 import matplotlib.pyplot as plt
 import geopandas as gpd
 
 def visualise_stations(stations, borough_file):
+    """
+        Generates a figure with geospatial data
+        Shows the stations position with their ID
+        Boroughs are used as a background layer
+    """
     borough = gpd.read_file(borough_file)
     fig = plt.figure(figsize=(20,20))
     gdf = gpd.GeoDataFrame(stations, geometry=gpd.points_from_xy(stations.longitude, stations.latitude))
