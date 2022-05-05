@@ -8,17 +8,13 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/05 17:48:46 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/05 17:50:02 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
-import pandas as pd
 import geopandas as gpd
 import plotly.express as px
-from ipywidgets import widgets
-import plotly.graph_objects as go
 import re
-from IPython.display import display
 
 from src.FeatureSelectionMethods.PearsonCorrelation import PearsonCorrelation
 
