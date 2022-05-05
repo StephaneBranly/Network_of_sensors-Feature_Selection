@@ -8,12 +8,17 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/01 22:36:17 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/05 17:48:46 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
-import matplotlib.pyplot as plt
+import pandas as pd
 import geopandas as gpd
+import plotly.express as px
+from ipywidgets import widgets
+import plotly.graph_objects as go
+import re
+from IPython.display import display
 
 from src.FeatureSelectionMethods.PearsonCorrelation import PearsonCorrelation
 
@@ -24,10 +29,12 @@ class FeatureSelection:
 
     _background_shape = None
 
-    _feature_selection_objects = None
+    _feature_selection_method_objects = None
+    _last_used_methods = None
+    _last_used_targets = None
     
     def __init__(self):
-        self._feature_selection_objects = [PearsonCorrelation()]
+        self._feature_selection_method_objects = [PearsonCorrelation()]
 
     def register_stations(self, stations_dataframe, lon_column='lon', lat_column='lat', geometry_column=None, name_column=None):
         self._stations_dataframe = stations_dataframe
@@ -40,37 +47,76 @@ class FeatureSelection:
             self._stations_geometry_column = 'geometry'
             self._stations_dataframe = self._stations_dataframe.drop(columns=[lon_column, lat_column])
 
+        self._stations_dataframe =  gpd.GeoDataFrame(self._stations_dataframe, geometry=self._stations_dataframe[self._stations_geometry_column])
+    
     def register_background_shape_file(self, shape_file_path):
         self._background_shape = gpd.read_file(shape_file_path)
 
     def plot_stations(self):
-        fig = plt.figure(figsize=(20,20))
-        gdf = gpd.GeoDataFrame(self._stations_dataframe, geometry=self._stations_dataframe[self._stations_geometry_column])
-
-        if type(self._background_shape) != type(None):
-            ax = self._background_shape.plot(alpha=0.5, edgecolor='k', color='#DDD')
-            gdf.plot(ax=ax, markersize=20)
-        else:
-            ax = gdf.plot(markersize=20)
-
-        ax.set_xlabel('Longitude', fontsize=10)
-        ax.set_ylabel('Latitude', fontsize='medium')
-        ax.set_title(f"Stations")
-
-        if self._stations_name_column:
-            for x, y, label in zip(gdf.geometry.x, gdf.geometry.y, gdf[self._stations_name_column]):
-                ax.annotate(label, xy=(x, y), xytext=(3, 3), textcoords="offset points")
+        fig = px.scatter_geo(self._stations_dataframe, 
+                lat=self._stations_dataframe[self._stations_geometry_column].y, 
+                lon=self._stations_dataframe[self._stations_geometry_column].x,     
+                size_max=15,
+                hover_name=self._stations_name_column,
+                fitbounds='locations',
+                title = 'Registered stations',
+                basemap_visible=True,
+        )
+        fig.show()
 
     def _get_feature_selection_object_by_name(self, name):
-        for method in self._feature_selection_objects:
+        for method in self._feature_selection_method_objects:
             if method.get_method_name() == name:
                 return method
         return None
+        
+    def select(self, dataframe, target_columns, method_names=None):
+        methods = self._feature_selection_method_objects if not method_names else [method for method in self._feature_selection_method_objects if method.get_method_name() in method_names]
 
-    def select(self, dataframe, target_column, method_name=None):
-        if method_name:
-            feature_selection_object = self._get_feature_selection_object_by_name(method_name)
-            feature_selection_object.select(dataframe, target_column)
-        else:
-            for method in self._feature_selection_objects:
-                method.select(dataframe, target_column)
+        for method in methods:
+            method.select(dataframe, target_columns)
+        
+        self._last_used_methods = [method.get_method_name() for method in methods]
+        self._last_used_targets = target_columns
+
+    def plot(self):
+        stations_importance = self.get_stations_importance(self._last_used_targets[0], 'PearsonCorrelation')
+        
+        fig = px.scatter_geo(stations_importance, 
+                lat=stations_importance[self._stations_geometry_column].y, 
+                lon=stations_importance[self._stations_geometry_column].x,     
+                color="max_importance_value", 
+                size=stations_importance["nb_important_sensors"]+0.1,
+                color_continuous_scale=px.colors.diverging.Portland, 
+                size_max=15,
+                hover_name=self._stations_name_column,
+                fitbounds='locations',
+                title = 'Feature importances',
+                basemap_visible=True,
+        )
+        fig.show()
+      
+        
+    def get_features_importance(self):
+        method_names = self._last_used_methods
+
+        methods = self._feature_selection_method_objects if not method_names else [method for method in self._feature_selection_method_objects if method.get_method_name() in method_names]
+        return dict(zip([method.get_method_name() for method in methods], [method.get_features_importance() for method in methods]))
+    
+    def get_stations_importance(self, target, method):
+        stations_importance = self._stations_dataframe.copy()
+        stations_importance['nb_important_sensors'] = 0
+        stations_importance['max_importance_value'] = 0
+        score = self.get_features_importance()[method]
+        for index in score.index:
+            x = re.search("station_([0-9]+)", index)
+            if x:
+                station_id = int(x.group(1))
+                importance_value = score[target][index]
+                stations_importance.loc[stations_importance['numero_station'] == station_id, 'nb_important_sensors'] += 1
+                stations_importance.loc[(stations_importance['numero_station'] == station_id) & (stations_importance['max_importance_value'] < importance_value), 'max_importance_value'] = importance_value 
+
+        return stations_importance
+
+    def get_available_methods(self):
+        return [method.get_method_name for method in self._feature_selection_method_objects]
