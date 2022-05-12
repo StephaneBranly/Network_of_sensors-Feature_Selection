@@ -1,19 +1,21 @@
 # ************************************************************************************************************************* #
 #   UTC Header                                                                                                              #
 #                                                         ::::::::::::::::::::       :::    ::: :::::::::::  ::::::::       #
-#      featureselection.py                                ::::::::::::::::::::       :+:    :+:     :+:     :+:    :+:      #
+#      FeatureSelection.py                                ::::::::::::::::::::       :+:    :+:     :+:     :+:    :+:      #
 #                                                         ::::::::::::::+++#####+++  +:+    +:+     +:+     +:+             #
 #      By: branlyst and ismailkad < >                     ::+++##############+++     +:+    +:+     +:+     +:+             #
 #                                                     +++##############+++::::       +#+    +:+     +#+     +#+             #
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/05 17:50:02 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/12 19:15:14 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
-import geopandas as gpd
+import geopandas
+from matplotlib import pyplot as plt
 import plotly.express as px
+import seaborn as sns
 import re
 
 from src.FeatureSelectionMethods.PearsonCorrelation import PearsonCorrelation
@@ -39,14 +41,14 @@ class FeatureSelection:
         if geometry_column:
             self._stations_geometry_column = geometry_column
         else:
-            self._stations_dataframe['geometry'] = gpd.points_from_xy(self._stations_dataframe[lon_column], self._stations_dataframe[lat_column])
+            self._stations_dataframe['geometry'] = geopandas.points_from_xy(self._stations_dataframe[lon_column], self._stations_dataframe[lat_column])
             self._stations_geometry_column = 'geometry'
             self._stations_dataframe = self._stations_dataframe.drop(columns=[lon_column, lat_column])
 
-        self._stations_dataframe =  gpd.GeoDataFrame(self._stations_dataframe, geometry=self._stations_dataframe[self._stations_geometry_column])
+        self._stations_dataframe =  geopandas.GeoDataFrame(self._stations_dataframe, geometry=self._stations_dataframe[self._stations_geometry_column])
     
     def register_background_shape_file(self, shape_file_path):
-        self._background_shape = gpd.read_file(shape_file_path)
+        self._background_shape = geopandas.read_file(shape_file_path)
 
     def plot_stations(self):
         fig = px.scatter_geo(self._stations_dataframe, 
@@ -58,6 +60,7 @@ class FeatureSelection:
                 title = 'Registered stations',
                 basemap_visible=True,
         )
+    
         fig.show()
 
     def _get_feature_selection_object_by_name(self, name):
@@ -76,21 +79,21 @@ class FeatureSelection:
         self._last_used_targets = target_columns
 
     def plot(self):
-        stations_importance = self.get_stations_importance(self._last_used_targets[0], 'PearsonCorrelation')
-        
-        fig = px.scatter_geo(stations_importance, 
-                lat=stations_importance[self._stations_geometry_column].y, 
-                lon=stations_importance[self._stations_geometry_column].x,     
-                color="max_importance_value", 
-                size=stations_importance["nb_important_sensors"]+0.1,
-                color_continuous_scale=px.colors.diverging.Portland, 
-                size_max=15,
-                hover_name=self._stations_name_column,
-                fitbounds='locations',
-                title = 'Feature importances',
-                basemap_visible=True,
+        stations_importances = self.get_stations_importance(self._last_used_targets[0], 'PearsonCorrelation')
+        gdf = geopandas.GeoDataFrame(stations_importances, geometry=self._stations_dataframe[self._stations_geometry_column], crs='EPSG:4326')
+        map = gdf.explore(
+            column='max_importance_value',
+            # cmap=plt.cm.get_cmap('turbo'),
+            legend=True,
+            marker_kwds=dict(radius=10, fill=True),
+            vmin=0,
+            vmax=1,
+            tiles='CartoDB dark_matter',
+            tooltip=self._stations_name_column,
+            tooltip_kwds=dict(labels=False),
         )
-        fig.show()
+        # gdf.plot(ax=ax1, column='max_importance_value', legend=True, markersize=(stations_importances['nb_important_sensors'] * 40 + 5), cmap=plt.cm.get_cmap('turbo'), vmin=0, vmax=1)
+        return map
       
         
     def get_features_importance(self):
