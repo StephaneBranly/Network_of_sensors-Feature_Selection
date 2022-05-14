@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/14 15:16:15 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/14 15:19:54 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -61,6 +61,8 @@ class FeatureSelection:
 
     def explore_stations(self):
         map = self._stations_dataframe.explore(
+            column=self._stations_id_column,
+            categorical=True,
             legend=True,
             popup=True,
             marker_kwds=dict(radius=5, fill=True),
