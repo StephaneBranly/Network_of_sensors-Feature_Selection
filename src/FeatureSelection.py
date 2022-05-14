@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/12 19:15:14 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/14 13:52:32 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -17,6 +17,8 @@ from matplotlib import pyplot as plt
 import plotly.express as px
 import seaborn as sns
 import re
+import folium
+import wrapt
 
 from src.FeatureSelectionMethods.PearsonCorrelation import PearsonCorrelation
 
@@ -78,21 +80,34 @@ class FeatureSelection:
         self._last_used_methods = [method.get_method_name() for method in methods]
         self._last_used_targets = target_columns
 
-    def plot(self):
+    def explore(self):
+        # overide of the stylefunction, should be added soon as a Geopandas feature.
+        @wrapt.patch_function_wrapper(folium, "GeoJson")
+        def new_style(wrapped, instance, args, kwargs):
+            def style_fn(x):
+                return {
+                    "fillColor": x["properties"]["__folium_color"],
+                    "color": x["properties"]["__folium_color"],
+                    "radius": x["properties"]["nb_important_sensors"] + 1,
+                    "fillOpacity":.8
+                }
+
+            if "_style_column" in str(kwargs["style_function"]):
+                kwargs["style_function"] = style_fn
+            return wrapped(*args, **kwargs)
+
         stations_importances = self.get_stations_importance(self._last_used_targets[0], 'PearsonCorrelation')
         gdf = geopandas.GeoDataFrame(stations_importances, geometry=self._stations_dataframe[self._stations_geometry_column], crs='EPSG:4326')
         map = gdf.explore(
             column='max_importance_value',
-            # cmap=plt.cm.get_cmap('turbo'),
             legend=True,
-            marker_kwds=dict(radius=10, fill=True),
+            marker_kwds=dict(radius=10, fill=True, popup='Hello world'),
             vmin=0,
             vmax=1,
             tiles='CartoDB dark_matter',
-            tooltip=self._stations_name_column,
-            tooltip_kwds=dict(labels=False),
+            tooltip=[self._stations_name_column, 'sensors'],
+            tooltip_kwds=dict(labels=True)
         )
-        # gdf.plot(ax=ax1, column='max_importance_value', legend=True, markersize=(stations_importances['nb_important_sensors'] * 40 + 5), cmap=plt.cm.get_cmap('turbo'), vmin=0, vmax=1)
         return map
       
         
@@ -106,6 +121,7 @@ class FeatureSelection:
         stations_importance = self._stations_dataframe.copy()
         stations_importance['nb_important_sensors'] = 0
         stations_importance['max_importance_value'] = 0
+        stations_importance['sensors'] = ''
         score = self.get_features_importance()[method]
         for index in score.index:
             x = re.search("station_([0-9]+)", index)
@@ -113,6 +129,7 @@ class FeatureSelection:
                 station_id = int(x.group(1))
                 importance_value = score[target][index]
                 stations_importance.loc[stations_importance['numero_station'] == station_id, 'nb_important_sensors'] += 1
+                stations_importance.loc[stations_importance['numero_station'] == station_id, 'sensors'] += f"{index} : {'{:.2f}'.format(importance_value)}\n</br>"
                 stations_importance.loc[(stations_importance['numero_station'] == station_id) & (stations_importance['max_importance_value'] < importance_value), 'max_importance_value'] = importance_value 
 
         return stations_importance
