@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/14 13:59:19 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/14 14:08:42 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -28,6 +28,7 @@ class FeatureSelection:
     _stations_name_column = None
     _stations_id_column = None
     _stations_get_id_from_sensor_regex = None
+    _stations_crs = None
 
     _background_shape = None
 
@@ -38,11 +39,12 @@ class FeatureSelection:
     def __init__(self):
         self._feature_selection_method_objects = [PearsonCorrelation()]
 
-    def register_stations(self, stations_dataframe, id_column, get_id_from_sensor_regex, lon_column='lon', lat_column='lat', geometry_column=None, name_column=None):
+    def register_stations(self, stations_dataframe, id_column, get_id_from_sensor_regex, lon_column='lon', lat_column='lat', geometry_column=None, name_column=None, crs='EPSG:4326'):
         self._stations_dataframe = stations_dataframe
         self._stations_name_column = name_column
         self._stations_id_column = id_column
         self._stations_get_id_from_sensor_regex = get_id_from_sensor_regex
+        self._stations_crs = crs
 
         if geometry_column:
             self._stations_geometry_column = geometry_column
@@ -51,23 +53,20 @@ class FeatureSelection:
             self._stations_geometry_column = 'geometry'
             self._stations_dataframe = self._stations_dataframe.drop(columns=[lon_column, lat_column])
 
-        self._stations_dataframe =  geopandas.GeoDataFrame(self._stations_dataframe, geometry=self._stations_dataframe[self._stations_geometry_column])
+        self._stations_dataframe =  geopandas.GeoDataFrame(self._stations_dataframe, geometry=self._stations_dataframe[self._stations_geometry_column], crs=crs)
     
     def register_background_shape_file(self, shape_file_path):
         self._background_shape = geopandas.read_file(shape_file_path)
 
-    def plot_stations(self):
-        fig = px.scatter_geo(self._stations_dataframe, 
-                lat=self._stations_dataframe[self._stations_geometry_column].y, 
-                lon=self._stations_dataframe[self._stations_geometry_column].x,     
-                size_max=15,
-                hover_name=self._stations_name_column,
-                fitbounds='locations',
-                title = 'Registered stations',
-                basemap_visible=True,
+    def explore_stations(self):
+        map = self._stations_dataframe.explore(
+            legend=True,
+            popup=True,
+            marker_kwds=dict(radius=5, fill=True),
+            tiles='CartoDB dark_matter',
+            tooltip_kwds=dict(labels=True)
         )
-    
-        fig.show()
+        return map
 
     def _get_feature_selection_object_by_name(self, name):
         for method in self._feature_selection_method_objects:
@@ -101,15 +100,16 @@ class FeatureSelection:
             return wrapped(*args, **kwargs)
 
         stations_importances = self.get_stations_importance(used_target, used_method)
-        gdf = geopandas.GeoDataFrame(stations_importances, geometry=self._stations_dataframe[self._stations_geometry_column], crs='EPSG:4326')
+        gdf = geopandas.GeoDataFrame(stations_importances, geometry=self._stations_dataframe[self._stations_geometry_column], crs=self._stations_crs)
         map = gdf.explore(
             column='max_importance_value',
             legend=True,
-            marker_kwds=dict(radius=10, fill=True, popup='Hello world'),
+            marker_kwds=dict(radius=10, fill=True),
             vmin=0,
             vmax=1,
             tiles='CartoDB dark_matter',
             tooltip=[self._stations_name_column, self._stations_id_column, 'sensors'],
+            popup=[self._stations_name_column, self._stations_id_column, 'sensors'],
             tooltip_kwds=dict(labels=True)
         )
         return map
