@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/14 14:08:42 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/14 15:16:15 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -19,6 +19,7 @@ import seaborn as sns
 import re
 import folium
 import wrapt
+import contextily as ctx
 
 from src.FeatureSelectionMethods.PearsonCorrelation import PearsonCorrelation
 
@@ -49,7 +50,7 @@ class FeatureSelection:
         if geometry_column:
             self._stations_geometry_column = geometry_column
         else:
-            self._stations_dataframe['geometry'] = geopandas.points_from_xy(self._stations_dataframe[lon_column], self._stations_dataframe[lat_column])
+            self._stations_dataframe.loc[:, 'geometry'] = geopandas.points_from_xy(self._stations_dataframe.loc[:, lon_column], self._stations_dataframe.loc[:, lat_column])
             self._stations_geometry_column = 'geometry'
             self._stations_dataframe = self._stations_dataframe.drop(columns=[lon_column, lat_column])
 
@@ -99,9 +100,8 @@ class FeatureSelection:
                 kwargs["style_function"] = style_fn
             return wrapped(*args, **kwargs)
 
-        stations_importances = self.get_stations_importance(used_target, used_method)
-        gdf = geopandas.GeoDataFrame(stations_importances, geometry=self._stations_dataframe[self._stations_geometry_column], crs=self._stations_crs)
-        map = gdf.explore(
+        stations_importance = self.get_stations_importance(used_target, used_method)
+        map = stations_importance.explore(
             column='max_importance_value',
             legend=True,
             marker_kwds=dict(radius=10, fill=True),
@@ -114,7 +114,46 @@ class FeatureSelection:
         )
         return map
       
-        
+    def plot(self, used_targets=None, used_methods=None):
+        if not used_targets:
+            used_targets = self._last_used_targets
+        if not used_methods:
+            used_methods = self._last_used_methods
+        if len(used_methods) > 1 and len(used_targets) > 1:
+            raise NotImplementedError('Cannot plot results for multiple methods and multiple targets at once yet...')
+
+        if len(used_methods) > 1:
+            fig, axs = plt.subplots(len(used_methods), 2, figsize=(30, 10 * len(used_methods)), gridspec_kw={'width_ratios':[3,1]})
+            fig.suptitle(f"Feature importance visualization for the target {used_targets[0]}", fontsize=36)
+            for i, method in enumerate(used_methods):
+                self._plot(used_targets[0], method, axs[i, 0], axs[i, 1], title=f"Stations importance for the method {method}")
+        elif len(used_targets) > 1:   
+            fig, axs = plt.subplots(len(used_targets), 2, figsize=(30, 10 * len(used_targets)), gridspec_kw={'width_ratios':[3,1]})
+            fig.suptitle(f"Feature importance visualization for the method {used_methods[0]}", fontsize=36)
+            for i, target in enumerate(used_targets):
+                self._plot(target, used_methods[0], axs[i, 0], axs[i, 1], title=f"Stations importance for the target {target}")
+        else:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(30, 10), gridspec_kw={'width_ratios':[3,1]})
+            fig.suptitle(f"Feature importance visualization for the method {used_methods[0]} and the target {used_targets[0]}", fontsize=36)
+            self._plot(used_targets[0], used_methods[0], ax1, ax2)
+
+       
+
+    def _plot(self, target, method, ax1, ax2, title="Stations importance"):
+        stations_importance = self.get_stations_importance(target, method)
+        stations_importance = stations_importance.to_crs(epsg=3857) # change to Spherical Mercator to add ctx base map properly
+        features_importance = self.get_features_importance()
+        stations_importance.plot(ax=ax1, column='max_importance_value', legend=True, markersize=(stations_importance['nb_important_sensors'] * 40 + 5), cmap=plt.cm.get_cmap('plasma'), vmin=0, vmax=1)
+        ax1.set_xlabel('Longitude', fontsize=10)
+        ax1.set_ylabel('Latitude', fontsize='medium')
+        ax1.set_title(title)
+        ctx.add_basemap(ax1, source=ctx.providers.CartoDB.Positron)
+        for x, y, label, offsetY in zip(stations_importance.geometry.x, stations_importance.geometry.y, stations_importance[self._stations_id_column], stations_importance['nb_important_sensors'] + 5):
+            ax1.annotate(label, xy=(x, y), xytext=(0, offsetY), textcoords="offset points")
+
+        features_importance = features_importance[method].dropna().sort_values(by=[target], ascending=False)
+        sns.heatmap(features_importance[[target]], ax=ax2, annot=True, linewidths=.5, cmap=plt.cm.get_cmap('plasma'), cbar=False, vmin=0, vmax=1)
+
     def get_features_importance(self):
         method_names = self._last_used_methods
 
