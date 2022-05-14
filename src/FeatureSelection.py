@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/14 13:52:32 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/14 13:59:19 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -26,6 +26,8 @@ class FeatureSelection:
     _stations_dataframe = None
     _stations_geometry_column = 'geometry'
     _stations_name_column = None
+    _stations_id_column = None
+    _stations_get_id_from_sensor_regex = None
 
     _background_shape = None
 
@@ -36,9 +38,11 @@ class FeatureSelection:
     def __init__(self):
         self._feature_selection_method_objects = [PearsonCorrelation()]
 
-    def register_stations(self, stations_dataframe, lon_column='lon', lat_column='lat', geometry_column=None, name_column=None):
+    def register_stations(self, stations_dataframe, id_column, get_id_from_sensor_regex, lon_column='lon', lat_column='lat', geometry_column=None, name_column=None):
         self._stations_dataframe = stations_dataframe
         self._stations_name_column = name_column
+        self._stations_id_column = id_column
+        self._stations_get_id_from_sensor_regex = get_id_from_sensor_regex
 
         if geometry_column:
             self._stations_geometry_column = geometry_column
@@ -80,7 +84,7 @@ class FeatureSelection:
         self._last_used_methods = [method.get_method_name() for method in methods]
         self._last_used_targets = target_columns
 
-    def explore(self):
+    def explore(self, used_target, used_method):
         # overide of the stylefunction, should be added soon as a Geopandas feature.
         @wrapt.patch_function_wrapper(folium, "GeoJson")
         def new_style(wrapped, instance, args, kwargs):
@@ -96,7 +100,7 @@ class FeatureSelection:
                 kwargs["style_function"] = style_fn
             return wrapped(*args, **kwargs)
 
-        stations_importances = self.get_stations_importance(self._last_used_targets[0], 'PearsonCorrelation')
+        stations_importances = self.get_stations_importance(used_target, used_method)
         gdf = geopandas.GeoDataFrame(stations_importances, geometry=self._stations_dataframe[self._stations_geometry_column], crs='EPSG:4326')
         map = gdf.explore(
             column='max_importance_value',
@@ -105,7 +109,7 @@ class FeatureSelection:
             vmin=0,
             vmax=1,
             tiles='CartoDB dark_matter',
-            tooltip=[self._stations_name_column, 'sensors'],
+            tooltip=[self._stations_name_column, self._stations_id_column, 'sensors'],
             tooltip_kwds=dict(labels=True)
         )
         return map
@@ -124,13 +128,13 @@ class FeatureSelection:
         stations_importance['sensors'] = ''
         score = self.get_features_importance()[method]
         for index in score.index:
-            x = re.search("station_([0-9]+)", index)
+            x = re.search(self._stations_get_id_from_sensor_regex, index)
             if x:
                 station_id = int(x.group(1))
                 importance_value = score[target][index]
-                stations_importance.loc[stations_importance['numero_station'] == station_id, 'nb_important_sensors'] += 1
-                stations_importance.loc[stations_importance['numero_station'] == station_id, 'sensors'] += f"{index} : {'{:.2f}'.format(importance_value)}\n</br>"
-                stations_importance.loc[(stations_importance['numero_station'] == station_id) & (stations_importance['max_importance_value'] < importance_value), 'max_importance_value'] = importance_value 
+                stations_importance.loc[stations_importance[self._stations_id_column] == station_id, 'nb_important_sensors'] += 1
+                stations_importance.loc[stations_importance[self._stations_id_column] == station_id, 'sensors'] += f"{index} : {'{:.2f}'.format(importance_value)}\n</br>"
+                stations_importance.loc[(stations_importance[self._stations_id_column] == station_id) & (stations_importance['max_importance_value'] < importance_value), 'max_importance_value'] = importance_value 
 
         return stations_importance
 
