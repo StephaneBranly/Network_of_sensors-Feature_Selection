@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/05 17:12:03 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/14 14:18:07 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -20,4 +20,4 @@ class PearsonCorrelation(TemplateMethod):
 
     def select(self, dataframe, target_columns):
         target_correlation = dataframe.corr()[target_columns]
-        self._score = target_correlation
+        self._score = abs(target_correlation)
