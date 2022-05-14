@@ -8,11 +8,14 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/04/14 15:36:31 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/14 19:50:26 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
 import pandas as pd
+import re
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def replace_from_dic(string, dic):
   """
@@ -85,3 +88,34 @@ def convert_columns_to_float_type(data):
     data[float_column] = data[float_column].astype(float)
  
   return data
+
+
+
+def plot_meteorological_data(dataframe):
+  """
+    Plots the meteorological data
+  """
+  
+  columns = ['Temp (°C)', 'Point de rosée (°C)', 'Hum. rel (%)',
+        'Dir. du vent (10s deg)', 'Vit. du vent (km/h)', 'Visibilité (km)',
+        'Pression à la station (kPa)', 'Refroid. éolien']
+  fig, axs = plt.subplots(3, 3, figsize=(30, 15))
+  fig.tight_layout()
+  for i, column in enumerate(columns):
+    ax = axs[i // 3][i % 3]
+    ax.title.set_text(column)
+    pal = ['#20F']*sum(dataframe[column].isna())
+    if len(pal) == 0:
+        pal=['#20F']
+    g = sns.lineplot(ax=ax, 
+                  data=dataframe, 
+                  x=dataframe.index, 
+                  y=column,
+                  hue=dataframe[column].isna().cumsum(),
+                  palette=pal,
+                  legend=False,
+                  markers=True,
+                  alpha=.9
+              )
+
+    ax.set(ylabel=None)
