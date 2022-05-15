@@ -1,6 +1,10 @@
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.stattools import kpss
+from statsmodels.tsa.stattools import grangercausalitytests
+from statsmodels.tsa.api import VAR
+
 import pandas as pd
+import numpy as np
 
 def adf_test(series,title='', verbose=False):
     """
@@ -45,3 +49,125 @@ def kpss_test(series, verbose=False, **kw):
         return False
     else:
         return True
+    
+def stationarity_check(series, verbose=False):
+    """
+    Pass in a time series, checks for stationarity with adf test and if not verified performs differentiation
+    returns a serie verifying stationarity property
+    """
+    s = series
+    n_diff = 0
+    while not adf_test(s, verbose):
+        s = s.diff().dropna()
+        n_diff +=1
+    if verbose:
+        print(f"Number of differentiation operations performed: {n_diff}")
+    return s
+    
+def grangers_causation_matrix(data, variables, test='ssr_ftest', maxlag=10, verbose=False):    
+    """Check Granger Causality of all possible combinations of the Time series.
+    The rows are the response variable, columns are predictors. The values in the table 
+    are the P-Values. P-Values lesser than the significance level (0.05), implies 
+    the Null Hypothesis that the coefficients of the corresponding past values is 
+    zero, that is, the X does not cause Y can be rejected.
+
+    data      : pandas dataframe containing the time series variables
+    variables : list containing names of the time series variables.
+    """
+    df = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
+    
+    #maxlag = int((data.shape[0]  - 1)  / (2 * (data.shape[1] + 1)))
+    
+    for c in df.columns:
+        for r in df.index:
+            
+            if (c != r):
+                #Computing the lag order 
+                #check for stationarity
+                df_c_r = stationary_dataframe(data[[c,r]])
+                lag = var_lag_order(df_c_r)
+                test_result = grangercausalitytests(df_c_r, maxlag=lag, verbose=False)
+                p_values = [round(test_result[i+1][0][test][1],4) for i in range(maxlag)]
+                min_p_value = np.min(p_values)
+                #p_value = round(test_result[lag][0][test][1])
+                #print(p_value)
+                if verbose: print(f'Y = {r}, X = {c}, P Values = {p_values}')
+                df.loc[r, c] = min_p_value
+                
+            else:
+                df.loc[r, c] = 1
+                
+    df.columns = [var + '_x' for var in variables]
+    df.index = [var + '_y' for var in variables]
+    
+    return df
+
+def symmetrize(df):
+    A = df
+    if not isinstance(df,np.ndarray):
+        A = df.to_numpy()
+    n_row, n_col = A.shape
+    
+    if n_row != n_col:
+        print("Please use a square matrix")
+        return 0
+    
+    for i in range(1,n_row):
+        for j in range(i+1):
+            A[i,j] = 1 - max(A[i,j],A[j,i])
+            A[j,i] = A[i,j]
+    
+    return A
+
+def is_stationary(ts):
+    """
+    Check for stationarity of time series composing a dataframe or a series
+    returns a boolean
+    """
+    
+    try:
+        if isinstance(ts, pd.Series):
+            return adf_test(ts)
+        elif isinstance(ts, pd.DataFrame):
+            for c in ts.columns:
+                if not adf_test(ts[c]):
+                    return False
+            return True
+    except:
+        print('Wrong input type')
+        
+def stationary_series(series, verbose=False):
+    """
+    Pass in a time series, checks for stationarity with adf test and if not verified performs differentiation
+    returns a serie verifying stationarity property
+    """
+    s = series
+    n_diff = 0
+    while adf_test(s, verbose) == False:
+        s = s.diff().dropna()
+        n_diff +=1
+    if verbose:
+        print(f"Number of differentiation operations performed: {n_diff}")
+    return s
+
+def stationary_dataframe(dataframe, verbose=False):
+    """
+    Pass in a dataframe, checks for stationarity for each series with adf test and if not verified performs differentiation
+    returns a dataframe with each series verifying stationarity property
+    """
+    df = dataframe
+    for c in df.columns:
+        s = stationary_series(df[c], verbose)
+        df[c] = s
+    df.dropna(inplace=True)
+    return df
+
+def var_lag_order(dataframe, criterion='aic'):
+    #TODO: assert n_columns = 2
+    df = stationary_dataframe(dataframe)
+    model = VAR(df)
+    select_order = model.select_order()
+    if criterion == 'aic':
+    #We select the order based on AIC criterion
+        lag = select_order.aic
+    return lag
