@@ -1,4 +1,5 @@
 from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.stattools import kpss
 import pandas as pd
 
 def adf_test(series,title='', verbose=False):
@@ -25,3 +26,22 @@ def adf_test(series,title='', verbose=False):
             print("Fail to reject the null hypothesis")
             print("Data has a unit root and is non-stationary")
         return False
+    
+def kpss_test(series, verbose=False, **kw):  
+    """
+    Pass in a time series, returns an KPSS report
+    """  
+    statistic, p_value, n_lags, critical_values = kpss(series, **kw)
+    # Format Output
+    if verbose == True:
+        print(f'KPSS Statistic: {statistic}')
+        print(f'p-value: {p_value}')
+        print(f'num lags: {n_lags}')
+        print('Critial Values:')
+        for key, value in critical_values.items():
+            print(f'   {key} : {value}')
+        print(f'Result: The series is {"not " if p_value < 0.05 else ""}stationary')
+    if p_value < 0.05:
+        return False
+    else:
+        return True
