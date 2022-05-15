@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/14 15:19:54 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/15 14:35:20 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -180,4 +180,4 @@ class FeatureSelection:
         return stations_importance
 
     def get_available_methods(self):
-        return [method.get_method_name for method in self._feature_selection_method_objects]
+        return [method.get_method_name() for method in self._feature_selection_method_objects]
