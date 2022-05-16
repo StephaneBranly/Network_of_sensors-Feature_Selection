@@ -1,32 +1,29 @@
 # ************************************************************************************************************************* #
 #   UTC Header                                                                                                              #
 #                                                         ::::::::::::::::::::       :::    ::: :::::::::::  ::::::::       #
-#      utils_spatial.py                                   ::::::::::::::::::::       :+:    :+:     :+:     :+:    :+:      #
+#      TemplateMethod.py                                  ::::::::::::::::::::       :+:    :+:     :+:     :+:    :+:      #
 #                                                         ::::::::::::::+++#####+++  +:+    +:+     +:+     +:+             #
 #      By: branlyst and ismailkad < >                     ::+++##############+++     +:+    +:+     +:+     +:+             #
 #                                                     +++##############+++::::       +#+    +:+     +#+     +#+             #
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/14 17:48:56 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/05 17:12:19 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
-import matplotlib.pyplot as plt
-import geopandas as gpd
-import contextily as ctx
+class TemplateMethod:
+    _score = None
+    _method_name = None
 
-def visualise_stations(stations):
-    """
-        Generates a figure with geospatial data
-        Shows the stations position with their ID
-        Boroughs are used as a background layer
-    """
-    gdf = gpd.GeoDataFrame(stations, geometry=gpd.points_from_xy(stations.longitude, stations.latitude), crs='EPSG:4326').to_crs(epsg=3857)
-    ax = gdf.plot(column='nom', markersize=20)
-    ax.set_xlabel('Longitude', fontsize=10)
-    ax.set_ylabel('Latitude', fontsize=10)
-    ax.set_title(f"Visualisation of the stations")
-    ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron)
-    for x, y, label in zip(gdf.geometry.x, gdf.geometry.y, gdf.numero_station):
-        ax.annotate(label, xy=(x, y), xytext=(1, 4), textcoords="offset points")
+    def __init__(self, method_name):
+        self._method_name = method_name
+
+    def select(self, dataframe, target_columns):
+        raise NotImplementedError
+
+    def get_features_importance(self):
+        return self._score
+
+    def get_method_name(self):
+        return self._method_name
