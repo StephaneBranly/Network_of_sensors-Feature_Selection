@@ -156,18 +156,42 @@ def stationary_dataframe(dataframe, verbose=False):
     returns a dataframe with each series verifying stationarity property
     """
     df = dataframe
-    for c in df.columns:
-        s = stationary_series(df[c], verbose)
-        df[c] = s
-    df.dropna(inplace=True)
-    return df
+    diff = 0
+    while not is_stationary(df):
+        df = df.diff().dropna()
+        diff += 1
+    if verbose:
+        print("Number of times dataframe got differed: ", diff)
+    return df, diff
 
 def var_lag_order(dataframe, criterion='aic'):
+    """
+    Pass in a dataframe
+    Returns the optimal lag order given the criterion input for a VAR model
+    """
     #TODO: assert n_columns = 2
-    df = stationary_dataframe(dataframe)
-    model = VAR(df)
+    #TODO: assert dataframe stationary
+    model = VAR(dataframe)
     select_order = model.select_order()
     if criterion == 'aic':
     #We select the order based on AIC criterion
-        lag = select_order.aic
-    return lag
+        optimal_lag = select_order.aic
+    else:
+        #TODO: having other criterions handled
+        optimal_lag = select_order.aic
+    return optimal_lag
+
+def model_VAR(dataframe, lag=None, criterion='aic', verbose=False):
+    """
+    Pass in a dataframe, checks for stationarity and differ is necessary, then fit a VAR model with 
+    the optimal lag order given the criterion input or the lag input
+    Returns a model fitted to the data
+    """
+    df, n_diff = stationary_dataframe(dataframe, verbose=verbose)
+    if lag is None:
+        lag_order = var_lag_order(df, criterion=criterion)
+    else:
+        lag_order = lag
+    model = VAR(df)
+    model_fitted = model.fit(lag_order)
+    return model_fitted
