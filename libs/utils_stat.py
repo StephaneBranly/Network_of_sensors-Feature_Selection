@@ -74,6 +74,8 @@ def grangers_causation_matrix(data, variables, test='ssr_ftest', maxlag=10, verb
     data      : pandas dataframe containing the time series variables
     variables : list containing names of the time series variables.
     """
+    
+    #TODO: assert dataframe is stationary
     df = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
     
     #maxlag = int((data.shape[0]  - 1)  / (2 * (data.shape[1] + 1)))
@@ -84,10 +86,10 @@ def grangers_causation_matrix(data, variables, test='ssr_ftest', maxlag=10, verb
             if (c != r):
                 #Computing the lag order 
                 #check for stationarity
-                df_c_r = stationary_dataframe(data[[c,r]])
+                df_c_r, _ = stationary_dataframe(data[[r,c]])
                 lag = var_lag_order(df_c_r)
                 test_result = grangercausalitytests(df_c_r, maxlag=lag, verbose=False)
-                p_values = [round(test_result[i+1][0][test][1],4) for i in range(maxlag)]
+                p_values = [round(test_result[i+1][0][test][1],4) for i in range(lag)]
                 min_p_value = np.min(p_values)
                 #p_value = round(test_result[lag][0][test][1])
                 #print(p_value)
@@ -112,8 +114,10 @@ def symmetrize(df):
         print("Please use a square matrix")
         return 0
     
-    for i in range(1,n_row):
+    for i in range(0,n_row):
         for j in range(i+1):
+            if i == j:
+                A[i,j] = 0
             A[i,j] = 1 - max(A[i,j],A[j,i])
             A[j,i] = A[i,j]
     
@@ -125,16 +129,16 @@ def is_stationary(ts):
     returns a boolean
     """
     
-    try:
-        if isinstance(ts, pd.Series):
-            return adf_test(ts)
-        elif isinstance(ts, pd.DataFrame):
-            for c in ts.columns:
-                if not adf_test(ts[c]):
-                    return False
-            return True
-    except:
-        print('Wrong input type')
+    if isinstance(ts, pd.Series):
+        return adf_test(ts)
+    elif isinstance(ts, pd.DataFrame):
+        for c in ts.columns:
+            if not adf_test(ts[c]):
+                return False
+        return True
+    else:
+        print("Wrong input")
+        return False
         
 def stationary_series(series, verbose=False):
     """
@@ -187,7 +191,7 @@ def model_VAR(dataframe, lag=None, criterion='aic', verbose=False):
     the optimal lag order given the criterion input or the lag input
     Returns a model fitted to the data
     """
-    df, n_diff = stationary_dataframe(dataframe, verbose=verbose)
+    df, _ = stationary_dataframe(dataframe, verbose=verbose)
     if lag is None:
         lag_order = var_lag_order(df, criterion=criterion)
     else:
