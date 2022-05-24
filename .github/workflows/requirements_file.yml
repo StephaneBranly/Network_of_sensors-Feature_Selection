@@ -4,13 +4,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - name: Requirements file
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+  
+      - name: Generate requirements file
         id: Requirements_file
 
         uses: ryan-rozario/pipreqs-action-cpy@master
 
-        # Put an example of mandatory inputs here
         with:
-          PROJECT_PATH: ./src   #default is the root of the repository
-          REQUIREMENT_PATH: ./src/requirements.txt  #default is requirement.txt in the root of your repository 
+          PROJECT_PATH: ./src
+          REQUIREMENT_PATH: ./src/requirements.txt
