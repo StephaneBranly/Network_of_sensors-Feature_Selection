@@ -17,7 +17,8 @@ jobs:
           sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
           sudo apt-get update
           sudo apt-get install gdal-bin libgdal-dev
-
+      - name: Install rasterio
+        run: pip install rasterio==1.3a3
       - name: Install module dependencies 🧱
         run: pip install -r ./src/requirements.txt
       - name: Install pdoc 🔧
