@@ -320,7 +320,7 @@ class FeatureSelection:
 
     def get_features_importance(self):
         """
-            Get the features importance. Feature selection (`select()`) must be done before
+        Get the features importance. Feature selection (`select()`) must be done before
         """
         method_names = self._last_used_methods
 
@@ -378,7 +378,6 @@ class FeatureSelection:
         """
         Get the name of all registered Feature Selection Methods
         """
-
 
         return [
             method.get_method_name()
