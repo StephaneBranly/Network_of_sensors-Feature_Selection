@@ -1,0 +1,36 @@
+name: Build documentation and Deploy
+on:   
+  push:
+    branches:
+      - main
+permissions: 
+  contents: write
+jobs:
+  build-and-deploy:
+    concurrency: ci-${{ github.ref }} # Recommended if you intend to make multiple deployments in quick succession.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+
+      - name: Install python 🐍 
+        uses: actions/setup-python@v3
+      - name: Install GDAL 🖥
+        run: | 
+          sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
+          sudo apt-get update
+          sudo apt-get install gdal-bin libgdal-dev
+      - name: Install rasterio
+        run: pip install rasterio==1.3a3
+      - name: Install module dependencies 🧱
+        run: pip install -r ./src/requirements.txt
+      - name: Install pdoc 🔧
+        run: pip install pdoc
+      - name: Build documentation 📜
+        run: pdoc -d google ./src/*.py ./src/FeatureSelectionMethods/*.py -o ./docs
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4.3.3
+        with:
+          branch: github-pages # The branch the action should deploy to.
+          folder: docs # The folder the action should deploy.
