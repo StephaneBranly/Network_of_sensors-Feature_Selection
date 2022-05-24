@@ -1,0 +1,16 @@
+name: Update requirements file
+on: [pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Requirements file
+        id: Requirements file
+
+        uses: ryan-rozario/pipreqs-action-cpy@master
+
+        # Put an example of mandatory inputs here
+        with:
+          PROJECT_PATH: ./src   #default is the root of the repository
+          REQUIREMENT_PATH: ./src/requirements.txt  #default is requirement.txt in the root of your repository 
