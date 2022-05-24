@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/24 16:12:16 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/24 16:34:57 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -320,7 +320,7 @@ class FeatureSelection:
 
     def get_features_importance(self):
         """
-        Get the features importance. Feature selection (`select()`) must be done before
+            Get the features importance. Feature selection (`select()`) must be done before
         """
         method_names = self._last_used_methods
 
@@ -378,6 +378,8 @@ class FeatureSelection:
         """
         Get the name of all registered Feature Selection Methods
         """
+
+
         return [
             method.get_method_name()
             for method in self._feature_selection_method_objects
