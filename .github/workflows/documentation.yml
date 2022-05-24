@@ -12,6 +12,8 @@ jobs:
 
       - name: Install python 🐍 
         uses: actions/setup-python@v3
+      - name: Install module dependencies 🧱
+        run: pip install -r ./src/requirements.txt
       - name: Install pdoc 🔧
         run: pip install pdoc
       - name: Build documentation 📜
