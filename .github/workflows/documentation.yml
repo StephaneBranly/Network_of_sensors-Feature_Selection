@@ -12,12 +12,11 @@ jobs:
 
       - name: Install python 🐍 
         uses: actions/setup-python@v3
-      - name: Install GDAL
+      - name: Install GDAL 🖥
         run: | 
           sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
           sudo apt-get update
           sudo apt-get install gdal-bin libgdal-dev
-          pip install GDAL
 
       - name: Install module dependencies 🧱
         run: pip install -r ./src/requirements.txt
