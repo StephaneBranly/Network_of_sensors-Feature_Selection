@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/15 14:35:20 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/05/24 16:12:16 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -24,14 +24,28 @@ import contextily as ctx
 from src.FeatureSelectionMethods.PearsonCorrelation import PearsonCorrelation
 
 class FeatureSelection:
+    """
+        Feature Selection is a module which permits to apply feature selection methods to a dataframe. It is specialised into geospatial timeseries and provides visualisation functions.
+
+        Attributes:
+            _stations_dataframe (GeoDataFrame) : contains the registered stations 
+            _stations_geometry_column (str) : indicates the column name of _stations_dataframe which contains the geometry of the station
+            _stations_name_column (str | None) : indicates the column name of _stations_dataframe which contains the name of the station
+            _stations_id_column (str) : indicates the column name of _stations_dataframe which contains the id of the station
+            _stations_get_id_from_sensor_regex (str) : regex used to find the station id in the dataframe containing all records used for feature selection
+            _stations_crs (str) : current crs of the _stations_dataframe
+
+            _feature_selection_method_objects (TemplateMethod[]) : Array of TemplateMethod implemented objects
+            _last_used_methods (str[]) : last used method names
+            _last_used_targets (str[]) : last used targets names
+    """
+
     _stations_dataframe = None
     _stations_geometry_column = 'geometry'
     _stations_name_column = None
     _stations_id_column = None
     _stations_get_id_from_sensor_regex = None
     _stations_crs = None
-
-    _background_shape = None
 
     _feature_selection_method_objects = None
     _last_used_methods = None
@@ -41,6 +55,20 @@ class FeatureSelection:
         self._feature_selection_method_objects = [PearsonCorrelation()]
 
     def register_stations(self, stations_dataframe, id_column, get_id_from_sensor_regex, lon_column='lon', lat_column='lat', geometry_column=None, name_column=None, crs='EPSG:4326'):
+        """
+            Register the stations in order to have a visualisation
+
+            Args:
+                stations_dataframe (DataFrame | GeoDataFrame) : DataFrame containing the stations
+                id_column (str) : column name of the stations_dataframe which contains the unique id of the station
+                get_id_from_sensor_regex (str) : regex used to find the station id in the dataframe containing all records used for feature selection
+                lon_column (str) : column name of the stations_dataframe which contains the longitude of the station
+                lat_column (str) : column name of the stations_dataframe which contains the latitude of the station
+                geometry_column (str | None) : if provided and dataframe is a GeoDataFrame, column name of the stations_dataframe which contains the geometry
+                name_column (str | None) : if provided, column name of the stations_dataframe which contains the name of the station
+                crs (str) : crs used for the location
+        """
+
         self._stations_dataframe = stations_dataframe
         self._stations_name_column = name_column
         self._stations_id_column = id_column
@@ -56,10 +84,10 @@ class FeatureSelection:
 
         self._stations_dataframe =  geopandas.GeoDataFrame(self._stations_dataframe, geometry=self._stations_dataframe[self._stations_geometry_column], crs=crs)
     
-    def register_background_shape_file(self, shape_file_path):
-        self._background_shape = geopandas.read_file(shape_file_path)
-
     def explore_stations(self):
+        """
+            Explore the different registered stations on an interactive map
+        """
         map = self._stations_dataframe.explore(
             column=self._stations_id_column,
             categorical=True,
@@ -72,12 +100,27 @@ class FeatureSelection:
         return map
 
     def _get_feature_selection_object_by_name(self, name):
+        """
+            Private method, get the feature selection method object by is name
+
+            Args:
+                name (str) : Feature selection method registered name
+        """
+
         for method in self._feature_selection_method_objects:
             if method.get_method_name() == name:
                 return method
         return None
         
     def select(self, dataframe, target_columns, method_names=None):
+        """
+            Apply feature selection methods on target_columns for a given dataframe
+
+            Args:
+                dataframe (DataFrame) : dataframe which contains the data used to apply the feature selection. 1 column by feature and 1 line by entry
+                target_columns (str[]) : array of the target column names used to apply the feature selection
+                method_names (str[] | None) : array of the method names to use for feature selection, if None, all registered methods will be applied
+        """
         methods = self._feature_selection_method_objects if not method_names else [method for method in self._feature_selection_method_objects if method.get_method_name() in method_names]
 
         for method in methods:
@@ -87,6 +130,14 @@ class FeatureSelection:
         self._last_used_targets = target_columns
 
     def explore(self, used_target, used_method):
+        """
+            Explore the results of the feature selection on an interactive map for a method and a target. Feature selection (`select()`) must be done before
+
+            Args:
+                used_target (str) : the name of the target that we wan't to see (must be referenced in `target_columns` when `select()`)
+                used_method (str) : the name of the method that we wan't to see (must be referenced in `method_names` when `select()`, or None used)
+        """
+
         # overide of the stylefunction, should be added soon as a Geopandas feature.
         @wrapt.patch_function_wrapper(folium, "GeoJson")
         def new_style(wrapped, instance, args, kwargs):
@@ -117,6 +168,15 @@ class FeatureSelection:
         return map
       
     def plot(self, used_targets=None, used_methods=None):
+        """
+            Plot the results of the feature selection. Feature selection (`select()`) must be done before.
+            (Cannot plot results for multiple methods and multiple targets at once)
+            
+            Args:
+                used_targets (str[] | None) : the name of the targets that we wan't to see (must be referenced in `target_columns` when `select()`). If None, all last used_targets will be used
+                used_methods (str[] | None) : the name of the methods that we wan't to see (must be referenced in `method_names` when `select()`, or None used). If None, all last used_methods will be used
+        """
+    
         if not used_targets:
             used_targets = self._last_used_targets
         if not used_methods:
@@ -142,6 +202,17 @@ class FeatureSelection:
        
 
     def _plot(self, target, method, ax1, ax2, title="Stations importance"):
+        """
+            Private method. Plot the result for a target and a method. Feature selection (`select()`) must be done before
+
+            Args:
+                target (str) : target name (must be referenced in `target_columns` when `select()`)
+                method (str) : method name (must be referenced in `method_names` when `select()`, or None used)
+                ax1 (Axe) : axe which will contains the map
+                ax2 (Axe) : axe which will contains the heatmap
+                title (str) : title of the figure
+        """
+
         stations_importance = self.get_stations_importance(target, method)
         stations_importance = stations_importance.to_crs(epsg=3857) # change to Spherical Mercator to add ctx base map properly
         features_importance = self.get_features_importance()
@@ -157,12 +228,22 @@ class FeatureSelection:
         sns.heatmap(features_importance[[target]], ax=ax2, annot=True, linewidths=.5, cmap=plt.cm.get_cmap('plasma'), cbar=False, vmin=0, vmax=1)
 
     def get_features_importance(self):
+        """
+            Get the features importance. Feature selection (`select()`) must be done before
+        """
         method_names = self._last_used_methods
 
         methods = self._feature_selection_method_objects if not method_names else [method for method in self._feature_selection_method_objects if method.get_method_name() in method_names]
         return dict(zip([method.get_method_name() for method in methods], [method.get_features_importance() for method in methods]))
     
     def get_stations_importance(self, target, method):
+        """
+            Generates a Stations importance for a target and a method. Feature selection (`select()`) must be done before
+
+            Args:
+                target (str) : target name (must be referenced in `target_columns` when `select()`)
+                method (str) : method name (must be referenced in `method_names` when `select()`, or None used)
+        """
         stations_importance = self._stations_dataframe.copy()
         stations_importance['nb_important_sensors'] = 0
         stations_importance['max_importance_value'] = 0
@@ -180,4 +261,7 @@ class FeatureSelection:
         return stations_importance
 
     def get_available_methods(self):
+        """
+            Get the name of all registered Feature Selection Methods
+        """
         return [method.get_method_name() for method in self._feature_selection_method_objects]
