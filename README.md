@@ -2,6 +2,12 @@
 
 ## Contribute to the module
 
+### Install dev-requirements
+
+```shell
+pip3 install -r dev-requirements.txt
+```
+
 ### Add Feature Selection methods
 
 1. Create a python file in the directory `./src/FeatureSelectionMethods`
