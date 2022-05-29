@@ -2,6 +2,8 @@ from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.stattools import kpss
 from statsmodels.tsa.stattools import grangercausalitytests
 from statsmodels.tsa.api import VAR
+from sklearn_extra.cluster import KMedoids
+
 
 import pandas as pd
 import numpy as np
@@ -74,6 +76,8 @@ def grangers_causation_matrix(data, variables, test='ssr_ftest', maxlag=10, verb
     data      : pandas dataframe containing the time series variables
     variables : list containing names of the time series variables.
     """
+    
+    #TODO: assert dataframe is stationary
     df = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
     
     #maxlag = int((data.shape[0]  - 1)  / (2 * (data.shape[1] + 1)))
@@ -84,10 +88,10 @@ def grangers_causation_matrix(data, variables, test='ssr_ftest', maxlag=10, verb
             if (c != r):
                 #Computing the lag order 
                 #check for stationarity
-                df_c_r = stationary_dataframe(data[[c,r]])
+                df_c_r, _ = stationary_dataframe(data[[r,c]])
                 lag = var_lag_order(df_c_r)
                 test_result = grangercausalitytests(df_c_r, maxlag=lag, verbose=False)
-                p_values = [round(test_result[i+1][0][test][1],4) for i in range(maxlag)]
+                p_values = [round(test_result[i+1][0][test][1],4) for i in range(lag)]
                 min_p_value = np.min(p_values)
                 #p_value = round(test_result[lag][0][test][1])
                 #print(p_value)
@@ -112,8 +116,10 @@ def symmetrize(df):
         print("Please use a square matrix")
         return 0
     
-    for i in range(1,n_row):
+    for i in range(0,n_row):
         for j in range(i+1):
+            if i == j:
+                A[i,j] = 0
             A[i,j] = 1 - max(A[i,j],A[j,i])
             A[j,i] = A[i,j]
     
@@ -125,16 +131,16 @@ def is_stationary(ts):
     returns a boolean
     """
     
-    try:
-        if isinstance(ts, pd.Series):
-            return adf_test(ts)
-        elif isinstance(ts, pd.DataFrame):
-            for c in ts.columns:
-                if not adf_test(ts[c]):
-                    return False
-            return True
-    except:
-        print('Wrong input type')
+    if isinstance(ts, pd.Series):
+        return adf_test(ts)
+    elif isinstance(ts, pd.DataFrame):
+        for c in ts.columns:
+            if not adf_test(ts[c]):
+                return False
+        return True
+    else:
+        print("Wrong input")
+        return False
         
 def stationary_series(series, verbose=False):
     """
@@ -156,18 +162,98 @@ def stationary_dataframe(dataframe, verbose=False):
     returns a dataframe with each series verifying stationarity property
     """
     df = dataframe
-    for c in df.columns:
-        s = stationary_series(df[c], verbose)
-        df[c] = s
-    df.dropna(inplace=True)
-    return df
+    diff = 0
+    while not is_stationary(df):
+        df = df.diff().dropna()
+        diff += 1
+    if verbose:
+        print("Number of times dataframe got differed: ", diff)
+    return df, diff
 
 def var_lag_order(dataframe, criterion='aic'):
+    """
+    Pass in a dataframe
+    Returns the optimal lag order given the criterion input for a VAR model
+    """
     #TODO: assert n_columns = 2
-    df = stationary_dataframe(dataframe)
-    model = VAR(df)
+    #TODO: assert dataframe stationary
+    model = VAR(dataframe)
     select_order = model.select_order()
     if criterion == 'aic':
     #We select the order based on AIC criterion
-        lag = select_order.aic
-    return lag
+        optimal_lag = select_order.aic
+    else:
+        #TODO: having other criterions handled
+        optimal_lag = select_order.aic
+    return optimal_lag
+
+def model_VAR(dataframe, lag=None, criterion='aic', verbose=False):
+    """
+    Pass in a dataframe, checks for stationarity and differ is necessary, then fit a VAR model with 
+    the optimal lag order given the criterion input or the lag input
+    Returns a model fitted to the data
+    """
+    df, _ = stationary_dataframe(dataframe, verbose=verbose)
+    if lag is None:
+        lag_order = var_lag_order(df, criterion=criterion)
+    else:
+        lag_order = lag
+    model = VAR(df)
+    model_fitted = model.fit(lag_order)
+    return model_fitted
+
+def k_medoids(matrix, n_clusters=[]):
+    
+    """
+    Performs multiple clustering with different n_cluster and keep track of inertia
+    Returns an pandas array
+    """
+    
+    results = []
+    
+    for n_cluster in n_clusters:
+        
+        for method in ["alternate", "pam"]:
+            
+            KMobj = KMedoids(n_clusters=n_cluster, method=method, metric="precomputed").fit(matrix)
+        
+            results.append([n_cluster, method, KMobj.inertia_])
+            
+    return pd.DataFrame(results, columns=["n_clusters", "method", "inertia"])
+
+def clustering_features(matrix, labels, target):
+    """
+    Returns the features in matrix having the max causality with the target for each cluster
+    """
+    features = []
+    for label in set(labels):
+        ind = np.where(labels == label)
+        max_feature = matrix[target].iloc[ind].idxmax()
+        features.append(max_feature)
+    return features
+
+def model_forecast(df, nobs, target):
+    
+    """
+    Takes as input a dataframe, a value nobs (the number of forecasts) and a target on which the RMSE will be calculated
+    Returns a dataframe for forecasted values and RMSE (root mean square error)
+    """
+    #Split dataset to train/test sets
+    df_train, df_test = df[0:-nobs], df[-nobs:]
+    
+    #Checks for stationarity and train models with optimal lag order 
+    model = model_VAR(df_train)
+    
+    #Get the lag order
+    model_lag_order = model.k_ar 
+
+    #Input data for forecasting
+    forecast_input = df.values[-model_lag_order:]
+    
+    #Forecasting
+    forecast = model.forecast(y=forecast_input, steps=nobs)
+    df_forecast = pd.DataFrame(forecast, index=df.index[-nobs:], columns=df.columns + '_2d')
+    
+    rmse = np.mean((df_forecast[target + "_2d"] - df_test[target])**2)**.5   
+    
+    return df_forecast, rmse
