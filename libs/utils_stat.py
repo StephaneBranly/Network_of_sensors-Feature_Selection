@@ -2,6 +2,8 @@ from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.stattools import kpss
 from statsmodels.tsa.stattools import grangercausalitytests
 from statsmodels.tsa.api import VAR
+from sklearn_extra.cluster import KMedoids
+
 
 import pandas as pd
 import numpy as np
@@ -199,3 +201,59 @@ def model_VAR(dataframe, lag=None, criterion='aic', verbose=False):
     model = VAR(df)
     model_fitted = model.fit(lag_order)
     return model_fitted
+
+def k_medoids(matrix, n_clusters=[]):
+    
+    """
+    Performs multiple clustering with different n_cluster and keep track of inertia
+    Returns an pandas array
+    """
+    
+    results = []
+    
+    for n_cluster in n_clusters:
+        
+        for method in ["alternate", "pam"]:
+            
+            KMobj = KMedoids(n_clusters=n_cluster, method=method, metric="precomputed").fit(matrix)
+        
+            results.append([n_cluster, method, KMobj.inertia_])
+            
+    return pd.DataFrame(results, columns=["n_clusters", "method", "inertia"])
+
+def clustering_features(matrix, labels, target):
+    """
+    Returns the features in matrix having the max causality with the target for each cluster
+    """
+    features = []
+    for label in set(labels):
+        ind = np.where(labels == label)
+        max_feature = matrix[target].iloc[ind].idxmax()
+        features.append(max_feature)
+    return features
+
+def model_forecast(df, nobs, target):
+    
+    """
+    Takes as input a dataframe, a value nobs (the number of forecasts) and a target on which the RMSE will be calculated
+    Returns a dataframe for forecasted values and RMSE (root mean square error)
+    """
+    #Split dataset to train/test sets
+    df_train, df_test = df[0:-nobs], df[-nobs:]
+    
+    #Checks for stationarity and train models with optimal lag order 
+    model = model_VAR(df_train)
+    
+    #Get the lag order
+    model_lag_order = model.k_ar 
+
+    #Input data for forecasting
+    forecast_input = df.values[-model_lag_order:]
+    
+    #Forecasting
+    forecast = model.forecast(y=forecast_input, steps=nobs)
+    df_forecast = pd.DataFrame(forecast, index=df.index[-nobs:], columns=df.columns + '_2d')
+    
+    rmse = np.mean((df_forecast[target + "_2d"] - df_test[target])**2)**.5   
+    
+    return df_forecast, rmse
