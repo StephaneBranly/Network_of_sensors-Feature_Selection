@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/24 16:34:57 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/06/08 15:35:41 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -22,6 +22,7 @@ import wrapt
 import contextily as ctx
 
 from src.FeatureSelectionMethods.PearsonCorrelation import PearsonCorrelation
+from src.FeatureSelectionMethods.GrangerCausality import GrangerCausality
 
 
 class FeatureSelection:
@@ -53,7 +54,10 @@ class FeatureSelection:
     _last_used_targets = None
 
     def __init__(self):
-        self._feature_selection_method_objects = [PearsonCorrelation()]
+        self._feature_selection_method_objects = [
+            PearsonCorrelation(),
+            GrangerCausality(),
+        ]
 
     def register_stations(
         self,
@@ -104,7 +108,7 @@ class FeatureSelection:
             crs=crs,
         )
 
-    def explore_stations(self):
+    def explore_stations(self, **explore_kwargs):
         """
         Explore the different registered stations on an interactive map
         """
@@ -116,6 +120,7 @@ class FeatureSelection:
             marker_kwds=dict(radius=5, fill=True),
             tiles="CartoDB dark_matter",
             tooltip_kwds=dict(labels=True),
+            **explore_kwargs,
         )
         return map
 
@@ -157,7 +162,7 @@ class FeatureSelection:
         self._last_used_methods = [method.get_method_name() for method in methods]
         self._last_used_targets = target_columns
 
-    def explore(self, used_target, used_method):
+    def explore(self, used_target, used_method, **explore_kwargs):
         """
         Explore the results of the feature selection on an interactive map for a method and a target. Feature selection (`select()`) must be done before
 
@@ -192,6 +197,7 @@ class FeatureSelection:
             tooltip=[self._stations_name_column, self._stations_id_column, "sensors"],
             popup=[self._stations_name_column, self._stations_id_column, "sensors"],
             tooltip_kwds=dict(labels=True),
+            **explore_kwargs,
         )
         return map
 
