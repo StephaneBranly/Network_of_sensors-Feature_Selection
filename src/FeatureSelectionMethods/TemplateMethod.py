@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/05/24 15:29:28 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/06/08 16:20:19 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -41,7 +41,7 @@ class TemplateMethod:
         """
         raise NotImplementedError
 
-    def get_features_importance(self):
+    def get_feature_importances(self):
         """
         Accessor to the _score variable
         """

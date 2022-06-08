@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/06/08 15:35:41 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/06/08 16:20:37 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -186,7 +186,7 @@ class FeatureSelection:
                 kwargs["style_function"] = style_fn
             return wrapped(*args, **kwargs)
 
-        stations_importance = self.get_stations_importance(used_target, used_method)
+        stations_importance = self.get_station_importances(used_target, used_method)
         map = stations_importance.explore(
             column="max_importance_value",
             legend=True,
@@ -280,11 +280,11 @@ class FeatureSelection:
             title (str) : title of the figure
         """
 
-        stations_importance = self.get_stations_importance(target, method)
+        stations_importance = self.get_station_importances(target, method)
         stations_importance = stations_importance.to_crs(
             epsg=3857
         )  # change to Spherical Mercator to add ctx base map properly
-        features_importance = self.get_features_importance()
+        features_importance = self.get_feature_importances()
         stations_importance.plot(
             ax=ax1,
             column="max_importance_value",
@@ -324,7 +324,7 @@ class FeatureSelection:
             vmax=1,
         )
 
-    def get_features_importance(self):
+    def get_feature_importances(self):
         """
         Get the features importance. Feature selection (`select()`) must be done before
         """
@@ -342,11 +342,11 @@ class FeatureSelection:
         return dict(
             zip(
                 [method.get_method_name() for method in methods],
-                [method.get_features_importance() for method in methods],
+                [method.get_feature_importances() for method in methods],
             )
         )
 
-    def get_stations_importance(self, target, method):
+    def get_station_importances(self, target, method):
         """
         Generates a Stations importance for a target and a method. Feature selection (`select()`) must be done before
 
@@ -358,7 +358,7 @@ class FeatureSelection:
         stations_importance["nb_important_sensors"] = 0
         stations_importance["max_importance_value"] = 0
         stations_importance["sensors"] = ""
-        score = self.get_features_importance()[method]
+        score = self.get_feature_importances()[method]
         for index in score.index:
             x = re.search(self._stations_get_id_from_sensor_regex, index)
             if x:
