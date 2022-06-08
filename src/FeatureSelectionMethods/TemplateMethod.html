@@ -42,7 +42,7 @@
                                 <a class="function" href="#TemplateMethod.select">select</a>
                         </li>
                         <li>
-                                <a class="function" href="#TemplateMethod.get_features_importance">get_features_importance</a>
+                                <a class="function" href="#TemplateMethod.get_feature_importances">get_feature_importances</a>
                         </li>
                         <li>
                                 <a class="function" href="#TemplateMethod.get_method_name">get_method_name</a>
@@ -81,7 +81,7 @@ src<wbr>.FeatureSelectionMethods<wbr>.TemplateMethod    </h1>
 </span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="c1">#                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="c1">#                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="c1">#                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="c1">#      Update: 2022/05/24 15:29:28 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="c1">#      Update: 2022/06/08 16:20:19 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="c1">#                                                                                                                           #</span>
 </span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="c1"># ************************************************************************************************************************* #</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>
@@ -114,7 +114,7 @@ src<wbr>.FeatureSelectionMethods<wbr>.TemplateMethod    </h1>
 </span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a>
-</span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a>    <span class="k">def</span> <span class="nf">get_features_importance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a>    <span class="k">def</span> <span class="nf">get_feature_importances</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a>        <span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a><span class="sd">        Accessor to the _score variable</span>
 </span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a><span class="sd">        &quot;&quot;&quot;</span>
@@ -168,7 +168,7 @@ src<wbr>.FeatureSelectionMethods<wbr>.TemplateMethod    </h1>
 </span><span id="TemplateMethod-42"><a href="#TemplateMethod-42"><span class="linenos">42</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="TemplateMethod-43"><a href="#TemplateMethod-43"><span class="linenos">43</span></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 </span><span id="TemplateMethod-44"><a href="#TemplateMethod-44"><span class="linenos">44</span></a>
-</span><span id="TemplateMethod-45"><a href="#TemplateMethod-45"><span class="linenos">45</span></a>    <span class="k">def</span> <span class="nf">get_features_importance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="TemplateMethod-45"><a href="#TemplateMethod-45"><span class="linenos">45</span></a>    <span class="k">def</span> <span class="nf">get_feature_importances</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="TemplateMethod-46"><a href="#TemplateMethod-46"><span class="linenos">46</span></a>        <span class="sd">&quot;&quot;&quot;</span>
 </span><span id="TemplateMethod-47"><a href="#TemplateMethod-47"><span class="linenos">47</span></a><span class="sd">        Accessor to the _score variable</span>
 </span><span id="TemplateMethod-48"><a href="#TemplateMethod-48"><span class="linenos">48</span></a><span class="sd">        &quot;&quot;&quot;</span>
@@ -252,22 +252,22 @@ src<wbr>.FeatureSelectionMethods<wbr>.TemplateMethod    </h1>
 
 
                             </div>
-                            <div id="TemplateMethod.get_features_importance" class="classattr">
-                                        <input id="TemplateMethod.get_features_importance-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                            <div id="TemplateMethod.get_feature_importances" class="classattr">
+                                        <input id="TemplateMethod.get_feature_importances-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">get_features_importance</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span>)</span>
+        <span class="name">get_feature_importances</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span>)</span>
 
-                <label class="view-source-button" for="TemplateMethod.get_features_importance-view-source"><span>View Source</span></label>
+                <label class="view-source-button" for="TemplateMethod.get_feature_importances-view-source"><span>View Source</span></label>
 
     </div>
-    <a class="headerlink" href="#TemplateMethod.get_features_importance"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="TemplateMethod.get_features_importance-45"><a href="#TemplateMethod.get_features_importance-45"><span class="linenos">45</span></a>    <span class="k">def</span> <span class="nf">get_features_importance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span id="TemplateMethod.get_features_importance-46"><a href="#TemplateMethod.get_features_importance-46"><span class="linenos">46</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="TemplateMethod.get_features_importance-47"><a href="#TemplateMethod.get_features_importance-47"><span class="linenos">47</span></a><span class="sd">        Accessor to the _score variable</span>
-</span><span id="TemplateMethod.get_features_importance-48"><a href="#TemplateMethod.get_features_importance-48"><span class="linenos">48</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="TemplateMethod.get_features_importance-49"><a href="#TemplateMethod.get_features_importance-49"><span class="linenos">49</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span>
+    <a class="headerlink" href="#TemplateMethod.get_feature_importances"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="TemplateMethod.get_feature_importances-45"><a href="#TemplateMethod.get_feature_importances-45"><span class="linenos">45</span></a>    <span class="k">def</span> <span class="nf">get_feature_importances</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span id="TemplateMethod.get_feature_importances-46"><a href="#TemplateMethod.get_feature_importances-46"><span class="linenos">46</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="TemplateMethod.get_feature_importances-47"><a href="#TemplateMethod.get_feature_importances-47"><span class="linenos">47</span></a><span class="sd">        Accessor to the _score variable</span>
+</span><span id="TemplateMethod.get_feature_importances-48"><a href="#TemplateMethod.get_feature_importances-48"><span class="linenos">48</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="TemplateMethod.get_feature_importances-49"><a href="#TemplateMethod.get_feature_importances-49"><span class="linenos">49</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score</span>
 </span></pre></div>
 
 
