@@ -18,6 +18,8 @@ from src.scripts.utils import stationary_dataframe, symmetrize
 from statsmodels.tsa.stattools import grangercausalitytests
 from statsmodels.tsa.api import VAR
 
+from sklearn_extra.cluster import KMedoids
+
 import numpy as np
 import pandas as pd
 
@@ -32,12 +34,26 @@ class GrangerCausality(TemplateMethod):
         TemplateMethod.__init__(self, "GrangerCausality")
 
     def select(self, dataframe, target_columns):
+        
+        #make dataframe stationary
         df, _ = stationary_dataframe(dataframe)
+        
+        #compute granger causality matrix
         lagrange_matrix = self.grangers_causation_matrix(
             df, df.columns, test="ssr_ftest"
         )
+        
+        #make the matrix symmetric using the max function agg
         lgm = symmetrize(lagrange_matrix)
         lgm_df = pd.DataFrame(lgm, columns=df.columns, index=df.columns)
+        
+        #clustering using KMedoid
+        KMobj = KMedoids(n_clusters=15, metric="precomputed", init="k-medoids++").fit(lgm)
+        clusters = KMobj.labels_
+        
+        selected_features = gfsm_features(lgm_df, clusters, target_columns[0])
+        
+        #TODO: return selected_features 
         self._score = lgm_df[target_columns]
 
     def grangers_causation_matrix(
@@ -110,3 +126,14 @@ class GrangerCausality(TemplateMethod):
             # TODO: having other criterions handled
             optimal_lag = select_order.aic
         return optimal_lag
+    
+    def gfsm_features(matrix, labels, target):
+        """
+        Returns the features in matrix having the max causality with the target for each cluster
+        """
+        features = []
+        for label in set(labels):
+            ind = np.where(labels == label)
+            max_feature = matrix[target].iloc[ind].idxmax()
+            features.append(max_feature)
+        return features
