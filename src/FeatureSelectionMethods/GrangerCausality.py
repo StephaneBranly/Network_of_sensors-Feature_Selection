@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/06/14 17:04:00 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/06/14 23:46:56 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -53,7 +53,7 @@ class GrangerCausality(TemplateMethod):
         )
         clusters = KMobj.labels_
 
-        selected_features = gfsm_features(lgm_df, clusters, target_columns[0])
+        selected_features = self.gfsm_features(lgm_df, clusters, target_columns[0])
 
         # TODO: return selected_features
         self._score = lgm_df[target_columns]
@@ -129,9 +129,14 @@ class GrangerCausality(TemplateMethod):
             optimal_lag = select_order.aic
         return optimal_lag
 
-    def gfsm_features(matrix, labels, target):
+    def gfsm_features(self, matrix, labels, target):
         """
         Returns the features in matrix having the max causality with the target for each cluster
+
+        Args:
+            matrix (DataFrame) : the granger Matrix
+            labels
+            target (str) : target name
         """
         features = []
         for label in set(labels):
