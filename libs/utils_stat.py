@@ -4,7 +4,7 @@ from statsmodels.tsa.stattools import grangercausalitytests
 from statsmodels.tsa.api import VAR
 from sklearn_extra.cluster import KMedoids
 
-
+import plotly.express as px
 import pandas as pd
 import numpy as np
 
@@ -232,15 +232,22 @@ def clustering_features(matrix, labels, target):
         features.append(max_feature)
     return features
 
-def model_forecast(df, nobs, target):
+def model_forecast(dataframe, features, nobs, target):
     
     """
     Takes as input a dataframe, a value nobs (the number of forecasts) and a target on which the RMSE will be calculated
     Returns a dataframe for forecasted values and RMSE (root mean square error)
     """
+    
+    df = dataframe[features]
+    
+    #Make sure target is integrated in df
+    if target not in df.columns:
+        df = df.join(df[target])
+        
     #Split dataset to train/test sets
     df_train, df_test = df[0:-nobs], df[-nobs:]
-    
+        
     #Checks for stationarity and train models with optimal lag order 
     model = model_VAR(df_train)
     
@@ -252,8 +259,39 @@ def model_forecast(df, nobs, target):
     
     #Forecasting
     forecast = model.forecast(y=forecast_input, steps=nobs)
-    df_forecast = pd.DataFrame(forecast, index=df.index[-nobs:], columns=df.columns + '_2d')
+    df_forecast = pd.DataFrame(forecast, index=df.index[-nobs:], columns=df.columns + '_fc')
     
-    rmse = np.mean((df_forecast[target + "_2d"] - df_test[target])**2)**.5   
+    rmse = np.mean((df_forecast[target + "_fc"] - df_test[target])**2)**.5   
     
     return df_forecast, rmse
+
+def plot_forecast_vs_actual(df, forecast, nobs, target):
+    """
+    Input: initial dataframe, forecast dataframe, nobs, target
+    Return: plot of forecast vers actual values of target 
+    """
+    merged_df = df[-nobs:].join(forecast)
+    plot_df = merged_df[[target, target + '_fc']]
+    fig = px.line(plot_df, x=plot_df.index, y=plot_df.columns)
+    fig.update_layout(title='Forecast versus actual values',
+                   xaxis_title='Time',
+                   yaxis_title='Value')
+    fig.show()
+    
+def pca_features(df, pca):
+    """
+    Input: a dataframe and a fitted PCA model
+    Returns PCA most relevant features
+    """
+    
+    pd.DataFrame(pca.components_, columns = df.columns)
+
+    n_pcs= pca.n_components_ # get number of component
+    
+    # get the index of the most important feature on EACH component
+    most_important = [np.abs(pca.components_[i]).argmax() for i in range(n_pcs)]
+    initial_feature_names = df.columns
+    # get the most important feature names
+    most_important_names = list(set([initial_feature_names[most_important[i]] for i in range(n_pcs)]))
+    
+    return most_important_names
