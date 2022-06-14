@@ -24,5 +24,5 @@ pip3 install pipreqs
 
 Generate the file by running the command
 ```shell
-pipreqs ./src
+pipreqs ./src --force
 ```
