@@ -27,7 +27,7 @@ jobs:
       - name: Install pdoc 🔧
         run: pip install pdoc
       - name: Build documentation 📜
-        run: pdoc -d google ./src/*.py ./src/FeatureSelectionMethods/*.py -o ./docs
+        run: pdoc -d google ./src/**/*.py --logo https://www.utc.fr/wp-content/uploads/sites/28/2019/05/SU-UTC18-70.svg --favicon https://www.utc.fr/favicon.ico --footer-text "Feature Selection Module" -o ./docs
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.3.3
