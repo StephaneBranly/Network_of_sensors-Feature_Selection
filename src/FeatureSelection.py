@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/06/16 18:42:57 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/06/16 19:02:58 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -40,7 +40,7 @@ class FeatureSelection:
         _last_used_methods (str[]) : last used method names
         _last_used_targets (str[]) : last used targets names
 
-
+    Example:
     ```python
     # Import module
     from src.FeatureSelection import FeatureSelection
@@ -108,6 +108,7 @@ class FeatureSelection:
             name_column (str | None) : if provided, column name of the stations_dataframe which contains the name of the station
             crs (str) : crs used for the location
 
+        Example:
         ```python
         # Import stations references
         stations_references = pd.read_csv("./data/liste-des-stations-rsqa.csv")
@@ -152,6 +153,7 @@ class FeatureSelection:
         """
         Explore the different registered stations on an interactive map
 
+        Example:
         ```python
         # Explore the stations
         fs.explore_stations()
@@ -193,6 +195,7 @@ class FeatureSelection:
             target_columns (str[]) : array of the target column names used to apply the feature selection
             method_names (str[] | None) : array of the method names to use for feature selection, if None, all registered methods will be applied
 
+        Example:
         ```python
         # Apply a feature selection method (PearsonCorrelation) to the data for the targets pm2_5_station_3 and no_station_3
         fs.select(data, target_columns=['pm2_5_station_3', 'no_station_3'], method_names=['PearsonCorrelation'], number_of_target_to_keep=15)
@@ -222,6 +225,7 @@ class FeatureSelection:
             used_target (str) : the name of the target that we wan't to see (must be referenced in `target_columns` when `select()`)
             used_method (str) : the name of the method that we wan't to see (must be referenced in `method_names` when `select()`, or None used)
 
+        Example:
         ```python
         # Explore the results for the method PearsonCorrelation and the target pm2_5_station_3
         fs.explore(used_target='pm2_5_station_3', used_method='PearsonCorrelation')
@@ -267,6 +271,7 @@ class FeatureSelection:
             used_targets (str[] | None) : the name of the targets that we wan't to see (must be referenced in `target_columns` when `select()`). If None, all last used_targets will be used
             used_methods (str[] | None) : the name of the methods that we wan't to see (must be referenced in `method_names` when `select()`, or None used). If None, all last used_methods will be used
 
+        Example:
         ```python
         # Plot the results
         fs.plot()
@@ -415,6 +420,7 @@ class FeatureSelection:
         """
         Get the selected features. Feature selection (`select()`) must be done before
 
+        Example:
         ```python
         # Get access to the selected features for Pearson Correlation method and the target pm2_5_station_3
         fs.get_selected_features()['PearsonCorrelation']['pm2_5_station_3']
