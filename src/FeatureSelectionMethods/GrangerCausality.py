@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/06/14 23:46:56 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/06/16 17:51:15 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -33,7 +33,7 @@ class GrangerCausality(TemplateMethod):
     def __init__(self):
         TemplateMethod.__init__(self, "GrangerCausality")
 
-    def select(self, dataframe, target_columns):
+    def select(self, dataframe, target_columns, number_of_target_to_keep=1):
 
         # make dataframe stationary
         df, _ = stationary_dataframe(dataframe)
@@ -48,14 +48,18 @@ class GrangerCausality(TemplateMethod):
         lgm_df = pd.DataFrame(lgm, columns=df.columns, index=df.columns)
 
         # clustering using KMedoid
-        KMobj = KMedoids(n_clusters=15, metric="precomputed", init="k-medoids++").fit(
-            lgm
-        )
+        KMobj = KMedoids(
+            n_clusters=number_of_target_to_keep,
+            metric="precomputed",
+            init="k-medoids++",
+        ).fit(lgm)
         clusters = KMobj.labels_
 
-        selected_features = self.gfsm_features(lgm_df, clusters, target_columns[0])
-
-        # TODO: return selected_features
+        self._selected_features = dict()
+        for target_column in target_columns:
+            self._selected_features[target_column] = self.gfsm_features(
+                lgm_df, clusters, target_column
+            )
         self._score = lgm_df[target_columns]
 
     def grangers_causation_matrix(
