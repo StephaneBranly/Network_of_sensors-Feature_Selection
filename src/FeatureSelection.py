@@ -8,7 +8,7 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/06/08 16:20:37 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/06/16 17:44:28 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
@@ -137,7 +137,9 @@ class FeatureSelection:
                 return method
         return None
 
-    def select(self, dataframe, target_columns, method_names=None):
+    def select(
+        self, dataframe, target_columns, method_names=None, number_of_target_to_keep=1
+    ):
         """
         Apply feature selection methods on target_columns for a given dataframe
 
@@ -157,7 +159,7 @@ class FeatureSelection:
         )
 
         for method in methods:
-            method.select(dataframe, target_columns)
+            method.select(dataframe, target_columns, number_of_target_to_keep)
 
         self._last_used_methods = [method.get_method_name() for method in methods]
         self._last_used_targets = target_columns
@@ -343,6 +345,28 @@ class FeatureSelection:
             zip(
                 [method.get_method_name() for method in methods],
                 [method.get_feature_importances() for method in methods],
+            )
+        )
+
+    def get_selected_features(self):
+        """
+        Get the features importance. Feature selection (`select()`) must be done before
+        """
+        method_names = self._last_used_methods
+
+        methods = (
+            self._feature_selection_method_objects
+            if not method_names
+            else [
+                method
+                for method in self._feature_selection_method_objects
+                if method.get_method_name() in method_names
+            ]
+        )
+        return dict(
+            zip(
+                [method.get_method_name() for method in methods],
+                [method.get_selected_features() for method in methods],
             )
         )
 
