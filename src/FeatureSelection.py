@@ -8,13 +8,12 @@
 #                                                       +++##+++::::::::::::::       +#+    +:+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       +#+    +#+     +#+     +#+             #
 #                                                         ::::::::::::::::::::       #+#    #+#     #+#     #+#    #+#      #
-#      Update: 2022/06/16 17:44:28 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
+#      Update: 2022/06/16 18:42:57 by branlyst and ismai  ::::::::::::::::::::        ########      ###      ######## .fr   #
 #                                                                                                                           #
 # ************************************************************************************************************************* #
 
 import geopandas
 from matplotlib import pyplot as plt
-import plotly.express as px
 import seaborn as sns
 import re
 import folium
@@ -40,6 +39,32 @@ class FeatureSelection:
         _feature_selection_method_objects (TemplateMethod[]) : Array of TemplateMethod implemented objects
         _last_used_methods (str[]) : last used method names
         _last_used_targets (str[]) : last used targets names
+
+
+    ```python
+    # Import module
+    from src.FeatureSelection import FeatureSelection
+    import pandas as pd
+
+    # Import data sample
+    data = pd.read_csv('./data/sample.csv', index_col=0)
+
+    # Import stations references
+    stations_references = pd.read_csv("./data/liste-des-stations-rsqa.csv")
+
+    # Instanciation of FeatureSelection
+    fs = FeatureSelection()
+
+    # Registering the stations
+    fs.register_stations(
+        stations_references[stations_references['statut'] == 'ouvert'], # Select open stations
+        id_column="numero_station", # Indicate the unique id column name
+        get_id_from_sensor_regex="station_([0-9]+)", # Indicate how to get this unique id from the data column's names
+        lon_column='longitude', # Indicate longitude column
+        lat_column='latitude', # Indicate latitude column
+        name_column='nom' # Indicate name column
+    )
+    ```
     """
 
     _stations_dataframe = None
@@ -82,6 +107,21 @@ class FeatureSelection:
             geometry_column (str | None) : if provided and dataframe is a GeoDataFrame, column name of the stations_dataframe which contains the geometry
             name_column (str | None) : if provided, column name of the stations_dataframe which contains the name of the station
             crs (str) : crs used for the location
+
+        ```python
+        # Import stations references
+        stations_references = pd.read_csv("./data/liste-des-stations-rsqa.csv")
+
+        # Registering the stations
+        fs.register_stations(
+            stations_references[stations_references['statut'] == 'ouvert'], # Select open stations
+            id_column="numero_station", # Indicate the unique id column name
+            get_id_from_sensor_regex="station_([0-9]+)", # Indicate how to get this unique id from the data column's names
+            lon_column='longitude', # Indicate longitude column
+            lat_column='latitude', # Indicate latitude column
+            name_column='nom' # Indicate name column
+        )
+        ```
         """
 
         self._stations_dataframe = stations_dataframe
@@ -111,6 +151,11 @@ class FeatureSelection:
     def explore_stations(self, **explore_kwargs):
         """
         Explore the different registered stations on an interactive map
+
+        ```python
+        # Explore the stations
+        fs.explore_stations()
+        ```
         """
         map = self._stations_dataframe.explore(
             column=self._stations_id_column,
@@ -147,6 +192,11 @@ class FeatureSelection:
             dataframe (DataFrame) : dataframe which contains the data used to apply the feature selection. 1 column by feature and 1 line by entry
             target_columns (str[]) : array of the target column names used to apply the feature selection
             method_names (str[] | None) : array of the method names to use for feature selection, if None, all registered methods will be applied
+
+        ```python
+        # Apply a feature selection method (PearsonCorrelation) to the data for the targets pm2_5_station_3 and no_station_3
+        fs.select(data, target_columns=['pm2_5_station_3', 'no_station_3'], method_names=['PearsonCorrelation'], number_of_target_to_keep=15)
+        ```
         """
         methods = (
             self._feature_selection_method_objects
@@ -171,6 +221,11 @@ class FeatureSelection:
         Args:
             used_target (str) : the name of the target that we wan't to see (must be referenced in `target_columns` when `select()`)
             used_method (str) : the name of the method that we wan't to see (must be referenced in `method_names` when `select()`, or None used)
+
+        ```python
+        # Explore the results for the method PearsonCorrelation and the target pm2_5_station_3
+        fs.explore(used_target='pm2_5_station_3', used_method='PearsonCorrelation')
+        ```
         """
 
         # overide of the stylefunction, should be added soon as a Geopandas feature.
@@ -211,6 +266,14 @@ class FeatureSelection:
         Args:
             used_targets (str[] | None) : the name of the targets that we wan't to see (must be referenced in `target_columns` when `select()`). If None, all last used_targets will be used
             used_methods (str[] | None) : the name of the methods that we wan't to see (must be referenced in `method_names` when `select()`, or None used). If None, all last used_methods will be used
+
+        ```python
+        # Plot the results
+        fs.plot()
+
+        # Plot the results only for the target no_station_3
+        fs.plot(used_targets=['no_station_3'])
+        ```
         """
 
         if not used_targets:
@@ -350,7 +413,12 @@ class FeatureSelection:
 
     def get_selected_features(self):
         """
-        Get the features importance. Feature selection (`select()`) must be done before
+        Get the selected features. Feature selection (`select()`) must be done before
+
+        ```python
+        # Get access to the selected features for Pearson Correlation method and the target pm2_5_station_3
+        fs.get_selected_features()['PearsonCorrelation']['pm2_5_station_3']
+        ```
         """
         method_names = self._last_used_methods
 
