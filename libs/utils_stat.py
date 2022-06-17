@@ -5,6 +5,7 @@ from statsmodels.tsa.api import VAR
 from sklearn_extra.cluster import KMedoids
 
 import plotly.express as px
+import seaborn as sns
 import pandas as pd
 import numpy as np
 
@@ -266,17 +267,9 @@ def model_forecast(dataframe, features, nobs, target):
     return df_forecast, rmse
 
 def plot_forecast_vs_actual(df, forecast, nobs, target):
-    """
-    Input: initial dataframe, forecast dataframe, nobs, target
-    Return: plot of forecast vers actual values of target 
-    """
     merged_df = df[-nobs:].join(forecast)
     plot_df = merged_df[[target, target + '_fc']]
-    fig = px.line(plot_df, x=plot_df.index, y=plot_df.columns)
-    fig.update_layout(title='Forecast versus actual values',
-                   xaxis_title='Time',
-                   yaxis_title='Value')
-    fig.show()
+    sns.lineplot(data=plot_df, legend="auto")
     
 def pca_features(df, pca):
     """
